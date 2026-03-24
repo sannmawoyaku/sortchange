@@ -179,9 +179,9 @@ if __name__ == "__main__":
         description="sortchange: 試験管ソートパズルゲーム",
     )
     parser.add_argument(
-        "--play",
+        "--demo",
         action="store_true",
-        help="インタラクティブプレイモードを起動する",
+        help="自動デモモードを実行する（ソルバーが自動でパズルを解く）",
     )
     parser.add_argument(
         "--colors",
@@ -213,13 +213,13 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.play:
+    if args.demo:
+        demo_small()
+        demo_random()
+    else:
         interactive_play(
             num_colors=args.colors,
             tube_capacity=args.capacity,
             empty_tubes=args.empty,
             seed=args.seed,
         )
-    else:
-        demo_small()
-        demo_random()

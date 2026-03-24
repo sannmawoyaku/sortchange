@@ -31,23 +31,23 @@ pip install pytest
 python -m pytest tests/ -v
 ```
 
-## デモ
-
-```bash
-python main.py
-```
-
 ## インタラクティブプレイ
 
 ```bash
 # デフォルト設定（3色）でプレイ
-python main.py --play
+python main.py
 
 # 難易度をカスタマイズしてプレイ
-python main.py --play --colors 4 --seed 42
+python main.py --colors 4 --seed 42
 
 # オプション一覧
 python main.py --help
+```
+
+## 自動デモ（ソルバー検証用）
+
+```bash
+python main.py --demo
 ```
 
 プレイ中のコマンド:
