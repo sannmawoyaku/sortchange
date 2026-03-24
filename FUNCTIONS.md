@@ -1,79 +1,105 @@
 # Functions
 
-## sorter module
+## sortchange.models — メソッド一覧
 
-### `sort_denominations(denominations, descending=True) -> List[Denomination]`
+### `Tube`
 
-Sort a list of `Denomination` objects by value.
+| メソッド | 戻り値 | 説明 |
+|---------|--------|------|
+| `copy()` | `Tube` | 深いコピーを返す |
+| `to_tuple()` | `Tuple` | ハッシュ可能な状態表現 |
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `denominations` | `List[Denomination]` | — | Denominations to sort |
-| `descending` | `bool` | `True` | Largest first when `True`, smallest first when `False` |
+### `GameBoard`
 
-Returns a new sorted list (does not mutate the input).
-
----
-
-### `group_by_denomination(coins) -> Dict[int, int]`
-
-Count how many of each denomination value appear in a flat list of coins.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `coins` | `List[int]` | Coin/bill values (all must be positive) |
-
-Returns a `dict` mapping value → count, sorted descending. Raises `ValueError` for non-positive values.
+| メソッド | 戻り値 | 説明 |
+|---------|--------|------|
+| `is_valid_move(move)` | `bool` | 指定の手が合法かどうかを返す |
+| `apply_move(move)` | `GameBoard` | 手を適用した**新しい**ボードを返す（元のボードは変更しない） |
+| `get_valid_moves()` | `List[Move]` | 現在の状態から可能な全合法手を返す |
+| `to_state()` | `Tuple` | BFS用のハッシュ可能な状態表現 |
+| `copy()` | `GameBoard` | 深いコピーを返す |
 
 ---
 
-### `filter_usable_denominations(denominations, amount) -> List[Denomination]`
+## sortchange.game — ゲームロジックヘルパー
 
-Return only denominations whose value does not exceed `amount`, sorted descending.
+### `is_valid_move(board, move) -> bool`
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `denominations` | `List[Denomination]` | Candidate denominations |
-| `amount` | `int` | Upper bound (inclusive) |
+`board` 上で `move` が合法かどうかを返します。  
+`board.is_valid_move(move)` への委譲です。
 
----
-
-## ChangeCalculator class
-
-### `__init__(currency=Currency.JPY, denominations=None)`
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `currency` | `Currency` | `Currency.JPY` | Currency to operate in |
-| `denominations` | `Optional[List[Denomination]]` | `None` | Custom denominations; built-in defaults are used when `None` |
+**合法手の条件：**
+1. 両インデックスがチューブ数の範囲内
+2. 移動元が空でない
+3. 移動元がすでに complete でない
+4. 移動先が満杯でない
+5. 移動先が空、または移動先の最上部色が移動元の最上部色と一致
 
 ---
 
-### `calculate(amount) -> ChangeResult`
+### `apply_move(board, move) -> GameBoard`
 
-Calculate the minimum-coin breakdown for `amount` using the greedy algorithm.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `amount` | `int` | Change amount in smallest currency unit (must be ≥ 0) |
-
-Raises `ValueError` for negative amounts or amounts that cannot be represented.
+`move` を適用した新しい `GameBoard` を返します。元のボードは変更しません。
 
 ---
 
-### `calculate_difference(paid, price) -> ChangeResult`
+### `is_solved(board) -> bool`
 
-Calculate the change to return when a customer pays `paid` for goods costing `price`.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `paid` | `int` | Amount paid (smallest currency unit, must be ≥ `price`) |
-| `price` | `int` | Price of goods (smallest currency unit) |
-
-Raises `ValueError` if `paid < price` or either value is negative.
+全てのチューブが complete（空 or 単色満杯）なら `True` を返します。
 
 ---
 
-### `minimum_coins(amount) -> int`
+### `get_valid_moves(board) -> List[Move]`
 
-Convenience method returning the total number of coins/bills for `amount`.
+現在の状態から可能な全合法手のリストを返します。
+
+---
+
+## sortchange.solver — BFSソルバー
+
+### `solve(board, max_moves=200) -> Optional[List[Move]]`
+
+幅優先探索（BFS）で最短手順の解を求めます。
+
+| 引数 | 型 | デフォルト | 説明 |
+|-----|-----|-----------|------|
+| `board` | `GameBoard` | — | 初期ボード状態 |
+| `max_moves` | `int` | `200` | 探索の最大手数（安全上限） |
+
+**戻り値：** `List[Move]`（解の手順）、解なしの場合は `None`
+
+**既に解けている場合** は空リスト `[]` を返します。
+
+---
+
+## sortchange.factory — ボード生成ユーティリティ
+
+### `create_board(num_colors, tube_capacity=4, empty_tubes=2, seed=None) -> GameBoard`
+
+ランダムにシャッフルされたパズルボードを生成します。
+
+| 引数 | 型 | デフォルト | 説明 |
+|-----|-----|-----------|------|
+| `num_colors` | `int` | — | 色の種類数 |
+| `tube_capacity` | `int` | `4` | チューブの容量 |
+| `empty_tubes` | `int` | `2` | 空チューブの数 |
+| `seed` | `Optional[int]` | `None` | 再現性のための乱数シード |
+
+---
+
+### `create_solved_board(num_colors, tube_capacity=4, empty_tubes=0) -> GameBoard`
+
+クリア済み状態のボードを生成します（テスト・リファレンス用）。
+
+---
+
+### `create_board_from_lists(color_lists, tube_capacity=4) -> GameBoard`
+
+リストのリストからボードを生成します。`None` は空スロットとして扱います。
+
+```python
+board = create_board_from_lists(
+    [[Color.RED, Color.BLUE], [Color.BLUE, Color.RED], []],
+    tube_capacity=4,
+)
+```

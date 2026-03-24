@@ -1,57 +1,71 @@
 # Data Structures
 
-## Currency (Enum)
+## Color (Enum)
 
-Represents a supported currency.
+Represents a single block color in a tube.
 
-| Value | Description |
-|-------|-------------|
-| `JPY` | Japanese Yen |
-| `USD` | US Dollar |
-| `EUR` | Euro |
+| Name     | Value | 説明 |
+|----------|-------|------|
+| `RED`    | 1     | 赤   |
+| `BLUE`   | 2     | 青   |
+| `GREEN`  | 3     | 緑   |
+| `YELLOW` | 4     | 黄   |
+| `ORANGE` | 5     | オレンジ |
+| `PURPLE` | 6     | 紫   |
+| `PINK`   | 7     | ピンク |
+| `CYAN`   | 8     | シアン |
+| `BROWN`  | 9     | 茶   |
+| `GRAY`   | 10    | 灰   |
 
-## DENOMINATIONS (dict)
+---
 
-A constant mapping from `Currency` to a list of denomination values (in the smallest currency unit).
+## Tube (試験管)
 
-```python
-DENOMINATIONS: Dict[Currency, List[int]] = {
-    Currency.JPY: [1, 5, 10, 50, 100, 500, 1000, 5000, 10000],
-    Currency.USD: [1, 5, 10, 25, 50, 100, 500, 1000, 2000, 5000, 10000],
-    Currency.EUR: [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000],
-}
-```
+一本の試験管を表すクラス。ブロックをスタック構造で管理します。
 
-## Denomination (dataclass, frozen)
+- インデックス `0` = **底（bottom）**
+- インデックス `-1` = **上部（top）**
+- 全てのチューブは同じ固定の `capacity`（最大ブロック数）を持ちます。
 
-Represents a single coin or bill denomination.
+### プロパティ
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `value` | `int` | Face value in the smallest currency unit (must be > 0) |
-| `currency` | `Currency` | Currency this denomination belongs to |
-| `label` | `str` | Human-readable label (e.g. `"100円"`, `"$1.00"`) |
+| プロパティ | 型 | 説明 |
+|-----------|-----|------|
+| `capacity` | `int` | チューブの最大容量（デフォルト 4） |
+| `blocks` | `List[Color]` | 底から上へのブロックリスト（読み取り専用コピー） |
+| `top` | `Optional[Color]` | 最上部のブロック色。空の場合は `None` |
+| `size` | `int` | 現在のブロック数 |
+| `free_space` | `int` | 残り空きスロット数 |
+| `is_empty` | `bool` | ブロックが0個かどうか |
+| `is_full` | `bool` | 空きスロットが0個かどうか |
+| `is_complete` | `bool` | 空、または1色で満杯かどうか（クリア条件） |
+| `top_group_size` | `int` | 最上部に連続する同色ブロックの数 |
 
-Supports comparison operators (`<`, `<=`, `>`, `>=`) based on `value`.
+---
 
-## ChangeResult (dataclass)
+## Move (手)
 
-Holds the result of a change-calculation operation.
+一手の移動操作を表す不変データクラス（`frozen=True`）。
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `total` | `int` | Total change amount in the smallest currency unit |
-| `currency` | `Currency` | The currency used |
-| `breakdown` | `Dict[int, int]` | Maps denomination value → number of coins/bills used |
+| フィールド | 型 | 説明 |
+|-----------|-----|------|
+| `from_tube` | `int` | 移動元チューブのインデックス（0始まり） |
+| `to_tube` | `int` | 移動先チューブのインデックス（0始まり） |
 
-### Computed Properties
+- `from_tube == to_tube` の場合は `ValueError` を発生させます。
+- ハッシュ可能（集合・辞書のキーに使用可能）。
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `coins_used` | `int` | Total number of individual coins/bills |
+---
 
-### Methods
+## GameBoard (ゲームボード)
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `to_dict()` | `Dict` | Serialises the result to a plain dictionary |
+ゲーム全体の状態を保持するクラス。`Tube` の順序付きリストで構成されます。
+
+| プロパティ | 型 | 説明 |
+|-----------|-----|------|
+| `tubes` | `List[Tube]` | 全チューブの読み取り専用コピー |
+| `num_tubes` | `int` | チューブの総数 |
+| `tube_capacity` | `int` | 各チューブの容量（全て同じ） |
+| `is_solved` | `bool` | 全チューブが complete な場合 `True` |
+
+ハッシュ可能（BFS探索の訪問済み状態管理に使用）。

@@ -1,90 +1,122 @@
 # Implementation
 
-## Overview
+## 概要
 
-`sortchange` is a Python library that calculates and sorts coin/bill change for a given amount. It supports Japanese Yen (JPY), US Dollars (USD), and Euros (EUR) out of the box, and can be extended with custom denomination sets.
+`sortchange` は**試験管ソートパズルゲーム**のPythonライブラリです。
 
-## Project Structure
+複数の試験管（チューブ）に異なる色のブロックが混在した状態からスタートし、  
+各チューブを単一の色で揃えるとゲームクリアとなります。
+
+---
+
+## ゲームルール
+
+| ルール | 内容 |
+|--------|------|
+| 移動操作 | チューブの最上部にある**同色連続ブロック**をまとめて別のチューブへ注ぐ |
+| 移動条件 | 移動先が**空**、または移動先の最上部色が移動元と**同じ** |
+| 移動制限 | 移動先に**空きスロット**が必要 |
+| クリア条件 | 全てのチューブが**空**または**1色で満杯** |
+
+---
+
+## プロジェクト構成
 
 ```
 sortchange/
 ├── sortchange/
-│   ├── __init__.py          # Public API re-exports
-│   ├── models.py            # Data structures: Currency, Denomination, ChangeResult
-│   ├── sorter.py            # Sorting and grouping utilities
-│   └── change_calculator.py # Core ChangeCalculator class
+│   ├── __init__.py          # 公開APIの再エクスポート
+│   ├── models.py            # Color, Tube, GameBoard, Move データ構造
+│   ├── game.py              # ゲームロジックヘルパー関数
+│   ├── solver.py            # BFS自動ソルバー
+│   └── factory.py           # ボード生成ユーティリティ
 ├── tests/
 │   ├── __init__.py
-│   ├── test_models.py
-│   ├── test_sorter.py
-│   └── test_change_calculator.py
-├── main.py                  # CLI demonstration entry point
+│   ├── test_models.py        # データ構造テスト（54テスト）
+│   ├── test_game.py          # ゲームロジックテスト（10テスト）
+│   ├── test_solver.py        # ソルバーテスト（7テスト）
+│   └── test_factory.py       # ファクトリテスト（12テスト）
+├── main.py                   # CLIデモ
 ├── requirements.txt
 └── README.md
 ```
 
-## Algorithm
+---
 
-The change calculator uses a **greedy algorithm** (largest denomination first). This produces the minimum number of coins/bills for canonical currency systems (JPY, USD, EUR) where the denomination set satisfies the greedy-choice property.
+## アーキテクチャ設計
 
-### Steps
+### 不変性（Immutability）
 
-1. Sort denominations in descending order of value.
-2. For each denomination `d`:
-   - Compute `count = remaining // d.value`.
-   - Subtract `count * d.value` from `remaining`.
-   - Store `{d.value: count}` in the breakdown if `count > 0`.
-3. If `remaining > 0` after all denominations are exhausted, raise `ValueError`.
+`GameBoard.apply_move()` は元のボードを変更せず、新しいボードオブジェクトを返します。  
+これによりBFS探索での状態管理が安全かつシンプルになります。
 
-### Complexity
+### 状態のハッシュ化
 
-- **Time**: O(k) where k is the number of denomination types.
-- **Space**: O(k) for the breakdown dictionary.
+`GameBoard.to_state()` は全チューブの内容をタプルで表現し、  
+BFS探索の `visited` 集合でのO(1)重複チェックを可能にします。
 
-## Usage Examples
+---
 
-```python
-from sortchange import ChangeCalculator, Currency
+## ソルバーアルゴリズム
 
-# Japanese Yen — calculate change for 1234円
-calc = ChangeCalculator(currency=Currency.JPY)
-result = calc.calculate(1234)
-print(result)
-# ChangeResult(total=1234, currency=JPY)
-#     1000 x 1
-#      100 x 2
-#       10 x 3
-#        1 x 4
+BFS（幅優先探索）を使用して**最短手数**の解を求めます。
 
-# Calculate change when a customer pays 1000円 for an 780円 item
-result = calc.calculate_difference(paid=1000, price=780)
-print(result.total)   # 220
-print(result.coins_used)  # 4
+```
+queue = [(initial_board, [])]
+visited = {initial_state}
 
-# Custom denominations
-from sortchange import Denomination
-custom = [
-    Denomination(value=1, currency=Currency.JPY, label="1"),
-    Denomination(value=3, currency=Currency.JPY, label="3"),
-    Denomination(value=9, currency=Currency.JPY, label="9"),
-]
-calc2 = ChangeCalculator(currency=Currency.JPY, denominations=custom)
-result2 = calc2.calculate(9)
-print(result2.coins_used)  # 1
+while queue:
+    current, path = queue.popleft()
+    for each valid_move:
+        next_board = current.apply_move(move)
+        if next_board.state not in visited:
+            visited.add(next_board.state)
+            if next_board.is_solved:
+                return path + [move]   # 最短解を返す
+            queue.append((next_board, path + [move]))
 ```
 
-## Running Tests
+- **計算量**: O(S × M)  S=訪問済み状態数、M=1状態あたりの合法手数
+- **空間量**: O(S)
+
+---
+
+## 使用例
+
+```python
+from sortchange import Color, Tube, GameBoard, create_board_from_lists, solve
+
+# ボードを手動で定義
+board = create_board_from_lists([
+    [Color.RED, Color.BLUE, Color.RED, Color.BLUE],
+    [Color.BLUE, Color.RED, Color.BLUE, Color.RED],
+    [],  # 空チューブ
+    [],  # 空チューブ
+], tube_capacity=4)
+
+# 自動で解く
+solution = solve(board)
+print(f"解: {len(solution)} 手")
+
+for move in solution:
+    board = board.apply_move(move)
+
+assert board.is_solved  # クリア確認
+```
+
+---
+
+## テスト実行
 
 ```bash
 pip install pytest
 python -m pytest tests/ -v
 ```
 
-## Extending the Service
+---
 
-To add a new currency:
+## 新しい色の追加方法
 
-1. Add it to the `Currency` enum in `models.py`.
-2. Add its denomination list (in smallest unit) to `DENOMINATIONS` in `models.py`.
-3. Add a label lambda in `_build_default_denominations()` in `change_calculator.py`.
-4. Write tests in `tests/test_change_calculator.py`.
+1. `sortchange/models.py` の `Color` 列挙型に新しい色を追加する
+2. `sortchange/factory.py` の `ALL_COLORS` リストに含まれる（自動）
+3. テストを追加する
