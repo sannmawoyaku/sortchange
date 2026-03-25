@@ -38,6 +38,8 @@ class Color(Enum):
     CYAN = 8
     BROWN = 9
     GRAY = 10
+    LIME = 11
+    TEAL = 12
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"Color.{self.name}"

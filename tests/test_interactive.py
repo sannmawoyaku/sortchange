@@ -121,6 +121,49 @@ class TestInteractivePlay:
         out = captured.getvalue()
         assert "クリア" in out
 
+    def test_undo_command(self, monkeypatch):
+        """Undo with no history prints a message; undo after a move goes back."""
+        from sortchange import create_board, solve as bfs_solve
+
+        board = create_board(num_colors=2, tube_capacity=4, empty_tubes=2, seed=7)
+        solution = bfs_solve(board)
+        assert solution is not None and len(solution) >= 2
+
+        # Make first move, undo it, then solve normally
+        first_move = solution[0]
+        move_str = f"{first_move.from_tube} {first_move.to_tube}"
+        move_inputs = [move_str, "u"] + [f"{m.from_tube} {m.to_tube}" for m in solution]
+        captured = io.StringIO()
+        import sys
+        monkeypatch.setattr("builtins.input", _InputSimulator(move_inputs))
+        monkeypatch.setattr(sys, "stdout", captured)
+        interactive_play(num_colors=2, tube_capacity=4, empty_tubes=2, seed=7)
+        out = captured.getvalue()
+        assert "戻しました" in out
+        assert "クリア" in out
+
+    def test_undo_with_no_history(self, monkeypatch):
+        """Undo at the start should print a 'nothing to undo' message."""
+        inputs = ["u", "q"]
+        captured = io.StringIO()
+        import sys
+        monkeypatch.setattr("builtins.input", _InputSimulator(inputs))
+        monkeypatch.setattr(sys, "stdout", captured)
+        interactive_play(num_colors=2, seed=0)
+        out = captured.getvalue()
+        assert "元に戻せる手がありません" in out
+
+    def test_restart_command(self, monkeypatch):
+        """Restart resets move count and board; 'リスタート' should appear."""
+        inputs = ["r", "q"]
+        captured = io.StringIO()
+        import sys
+        monkeypatch.setattr("builtins.input", _InputSimulator(inputs))
+        monkeypatch.setattr(sys, "stdout", captured)
+        interactive_play(num_colors=2, seed=0)
+        out = captured.getvalue()
+        assert "リスタート" in out
+
 
 # ---------------------------------------------------------------------------
 # Helper

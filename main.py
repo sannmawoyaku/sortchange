@@ -56,14 +56,14 @@ def demo_small() -> None:
 
 
 def demo_random() -> None:
-    """A randomly generated 3-color puzzle."""
+    """A randomly generated 5-color puzzle."""
     from sortchange import create_board
 
     print("\n" + "=" * 50)
-    print("Demo: random 3-color puzzle (seed=42)")
+    print("Demo: random 5-color puzzle (seed=42)")
     print("=" * 50)
 
-    board = create_board(num_colors=3, tube_capacity=4, empty_tubes=2, seed=42)
+    board = create_board(num_colors=5, tube_capacity=4, empty_tubes=1, seed=42)
     print_board(board, 0)
 
     solution = solve(board)
@@ -95,9 +95,9 @@ def parse_move_input(text: str) -> "Move | None":
 
 
 def interactive_play(
-    num_colors: int = 3,
+    num_colors: int = 5,
     tube_capacity: int = 4,
-    empty_tubes: int = 2,
+    empty_tubes: int = 1,
     seed: "int | None" = None,
 ) -> None:
     """Run an interactive game session in the terminal.
@@ -108,25 +108,29 @@ def interactive_play(
 
     * ``<from> <to>``  – move from tube *from* to tube *to* (0-based)
     * ``h``            – show a one-step hint (uses the BFS solver)
+    * ``u``            – undo the last move
+    * ``r``            – restart the puzzle from the beginning
     * ``q``            – quit the game
 
     Args:
-        num_colors: Number of distinct colors / filled tubes (default 3).
+        num_colors: Number of distinct colors / filled tubes (default 5).
         tube_capacity: Number of block slots per tube (default 4).
-        empty_tubes: Number of empty tubes to add (default 2).
+        empty_tubes: Number of empty tubes to add (default 1).
         seed: Optional random seed for reproducibility.
     """
-    board = create_board(
+    initial_board = create_board(
         num_colors=num_colors,
         tube_capacity=tube_capacity,
         empty_tubes=empty_tubes,
         seed=seed,
     )
+    board = initial_board.copy()
+    history: list[GameBoard] = []
 
     move_count = 0
     print("\n" + "=" * 50)
     print(f"試験管ソートパズル ({num_colors}色 / チューブ容量 {tube_capacity})")
-    print("コマンド: '<移動元> <移動先>' で移動 | 'h' でヒント | 'q' で終了")
+    print("コマンド: '<移動元> <移動先>' で移動 | 'h' でヒント | 'u' で元に戻す | 'r' でリスタート | 'q' で終了")
     print("=" * 50)
 
     while not board.is_solved:
@@ -141,6 +145,22 @@ def interactive_play(
         if raw in ("q", "quit", "exit"):
             print("\nゲームを終了しました。")
             return
+
+        if raw in ("r", "restart"):
+            board = initial_board.copy()
+            history = []
+            move_count = 0
+            print("\nパズルをリスタートしました。")
+            continue
+
+        if raw in ("u", "undo"):
+            if not history:
+                print("  元に戻せる手がありません。")
+            else:
+                board = history.pop()
+                move_count -= 1
+                print("  1手戻しました。")
+            continue
 
         if raw in ("h", "hint"):
             solution = solve(board)
@@ -162,6 +182,7 @@ def interactive_play(
             print(f"  その手は無効です: {move}")
             continue
 
+        history.append(board.copy())
         board = board.apply_move(move)
         move_count += 1
 
@@ -186,9 +207,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--colors",
         type=int,
-        default=3,
+        default=5,
         metavar="N",
-        help="色の種類数（デフォルト: 3）",
+        help="色の種類数（デフォルト: 5）",
     )
     parser.add_argument(
         "--capacity",
@@ -200,9 +221,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--empty",
         type=int,
-        default=2,
+        default=1,
         metavar="N",
-        help="空チューブの数（デフォルト: 2）",
+        help="空チューブの数（デフォルト: 1）",
     )
     parser.add_argument(
         "--seed",

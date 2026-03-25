@@ -34,11 +34,11 @@ python -m pytest tests/ -v
 ## インタラクティブプレイ
 
 ```bash
-# デフォルト設定（3色）でプレイ
+# デフォルト設定（5色・空チューブ1本）でプレイ
 python main.py
 
 # 難易度をカスタマイズしてプレイ
-python main.py --colors 4 --seed 42
+python main.py --colors 7 --seed 42
 
 # オプション一覧
 python main.py --help
@@ -56,4 +56,6 @@ python main.py --demo
 |---------|------|
 | `<移動元> <移動先>` | チューブ間でブロックを移動（例: `0 2`） |
 | `h` | ヒントを表示（BFSソルバーが次の最善手を提案） |
+| `u` | 直前の手を1つ元に戻す |
+| `r` | パズルを最初からリスタート |
 | `q` | ゲームを終了 |
