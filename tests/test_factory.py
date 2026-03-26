@@ -43,7 +43,7 @@ class TestCreateBoard:
         # A random board is almost certainly not already solved.
         board = create_board(num_colors=3, seed=0)
         # Just verify it is a valid board (may or may not be solved).
-        assert board.num_tubes == 5  # 3 + 2 default empty
+        assert board.num_tubes == 4  # 3 + 1 default empty
 
     def test_reproducible_with_seed(self):
         b1 = create_board(num_colors=3, seed=99)

@@ -24,6 +24,15 @@ for move in solution:
 assert board.is_solved
 ```
 
+## Web UIでプレイ（ブラウザ）
+
+```bash
+pip install streamlit
+streamlit run app.py
+```
+
+ブラウザが自動的に開き、色付きの試験管UIでゲームをプレイできます。
+
 ## テスト
 
 ```bash
@@ -31,7 +40,7 @@ pip install pytest
 python -m pytest tests/ -v
 ```
 
-## インタラクティブプレイ
+## インタラクティブプレイ（ターミナル）
 
 ```bash
 # デフォルト設定（4色、空チューブ1本）でプレイ

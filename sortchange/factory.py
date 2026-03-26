@@ -19,7 +19,7 @@ ALL_COLORS: List[Color] = list(Color)
 def create_board(
     num_colors: int,
     tube_capacity: int = 4,
-    empty_tubes: int = 2,
+    empty_tubes: int = 1,
     seed: Optional[int] = None,
 ) -> GameBoard:
     """Create a randomized solvable-layout game board.
@@ -41,7 +41,7 @@ def create_board(
     Args:
         num_colors: Number of distinct colors / filled tubes.
         tube_capacity: Number of block slots per tube (default 4).
-        empty_tubes: Number of empty tubes to add (default 2).
+        empty_tubes: Number of empty tubes to add (default 1).
         seed: Optional random seed for reproducibility.
 
     Returns:
