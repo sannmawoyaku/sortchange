@@ -34,11 +34,11 @@ python -m pytest tests/ -v
 ## インタラクティブプレイ
 
 ```bash
-# デフォルト設定（3色）でプレイ
+# デフォルト設定（4色、空チューブ1本）でプレイ
 python main.py
 
 # 難易度をカスタマイズしてプレイ
-python main.py --colors 4 --seed 42
+python main.py --colors 6 --empty 2 --seed 42
 
 # オプション一覧
 python main.py --help

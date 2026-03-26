@@ -56,14 +56,14 @@ def demo_small() -> None:
 
 
 def demo_random() -> None:
-    """A randomly generated 3-color puzzle."""
+    """A randomly generated 4-color puzzle."""
     from sortchange import create_board
 
     print("\n" + "=" * 50)
-    print("Demo: random 3-color puzzle (seed=42)")
+    print("Demo: random 4-color puzzle (seed=42)")
     print("=" * 50)
 
-    board = create_board(num_colors=3, tube_capacity=4, empty_tubes=2, seed=42)
+    board = create_board(num_colors=4, tube_capacity=4, empty_tubes=1, seed=42)
     print_board(board, 0)
 
     solution = solve(board)
@@ -95,9 +95,9 @@ def parse_move_input(text: str) -> "Move | None":
 
 
 def interactive_play(
-    num_colors: int = 3,
+    num_colors: int = 4,
     tube_capacity: int = 4,
-    empty_tubes: int = 2,
+    empty_tubes: int = 1,
     seed: "int | None" = None,
 ) -> None:
     """Run an interactive game session in the terminal.
@@ -111,9 +111,9 @@ def interactive_play(
     * ``q``            – quit the game
 
     Args:
-        num_colors: Number of distinct colors / filled tubes (default 3).
+        num_colors: Number of distinct colors / filled tubes (default 4).
         tube_capacity: Number of block slots per tube (default 4).
-        empty_tubes: Number of empty tubes to add (default 2).
+        empty_tubes: Number of empty tubes to add (default 1).
         seed: Optional random seed for reproducibility.
     """
     board = create_board(
@@ -186,9 +186,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--colors",
         type=int,
-        default=3,
+        default=4,
         metavar="N",
-        help="色の種類数（デフォルト: 3）",
+        help="色の種類数（デフォルト: 4）",
     )
     parser.add_argument(
         "--capacity",
@@ -200,9 +200,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--empty",
         type=int,
-        default=2,
+        default=1,
         metavar="N",
-        help="空チューブの数（デフォルト: 2）",
+        help="空チューブの数（デフォルト: 1）",
     )
     parser.add_argument(
         "--seed",
